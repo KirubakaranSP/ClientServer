@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class Server {
-    private static String directoryPath;
+    private static String outputDirectory;
 
     public static void main(String[] args) throws Exception {
         Properties config = new Properties();
@@ -14,7 +14,7 @@ public class Server {
             config.load(configFile);
         }
 
-        directoryPath = config.getProperty("directory.path");
+        outputDirectory = config.getProperty("output.directory");
         int port = Integer.parseInt(config.getProperty("server.port"));
 
         ServerSocket serverSocket = new ServerSocket(port);
@@ -44,7 +44,7 @@ public class Server {
                 }
             }
 
-            File outputFile = new File(directoryPath+fileName);
+            File outputFile = new File(outputDirectory+fileName);
             try (FileOutputStream fos = new FileOutputStream(outputFile)) {
                 Properties properties = new Properties();
                 properties.putAll(receivedProperties);

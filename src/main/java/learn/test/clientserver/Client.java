@@ -21,7 +21,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 public class Client {
-    private static String directoryPath;
+    private static String directoryToMonitor;
     private static String keyPattern;
     private static String serverAddress;
     private static String serverPort;
@@ -32,10 +32,11 @@ public class Client {
             config.load(configFile);
         }
 
-        directoryPath = config.getProperty("directory.path");
+        directoryToMonitor = config.getProperty("monitor.directory");
         keyPattern = config.getProperty("key.filter.regex");
-        serverAddress = config.getProperty("server.address");
-        serverPort = config.getProperty("server.port");
+        String address = config.getProperty("server.address"); 
+        serverAddress = address.substring(0,serverAddress.lastIndexOf(":"));
+        serverPort = address.substring(address.lastIndexOf(":")+1,address.length());
 
         Pattern filterPattern = Pattern.compile(keyPattern);
 
@@ -43,9 +44,8 @@ public class Client {
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        // Monitor the directory for new property files
         WatchService watchService = FileSystems.getDefault().newWatchService();
-        Path path = Paths.get(directoryPath);
+        Path path = Paths.get(directoryToMonitor);
         path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
 
         while (true) {
@@ -54,7 +54,7 @@ public class Client {
                 WatchEvent<Path> ev = (WatchEvent<Path>) event;
                 Path filePath = ev.context();
                 if (filePath.toString().endsWith(".properties")) {
-                	File  resolvedFile = new File(directoryPath+File.separator+filePath.toString());
+                	File  resolvedFile = new File(directoryToMonitor+File.separator+filePath.toString());
                     Map<String, String> filteredProperties = processFile(resolvedFile, filterPattern);
                     out.println("filename="+filePath.getFileName());
                     for (Map.Entry<String, String> entry : filteredProperties.entrySet()) {
